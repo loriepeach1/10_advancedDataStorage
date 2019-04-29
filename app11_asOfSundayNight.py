@@ -4,6 +4,8 @@ from flask import Flask, jsonify
 
 import sqlite3
 
+import datetime as dt
+
 justice_league_members = [
     {"superhero": "Aquaman", "real_name": "Arthur Curry"},
     {"superhero": "Batman", "real_name": "Bruce Wayne"},
@@ -59,8 +61,17 @@ def precipitation():
     """Return the JSON representation of your dictionary."""
     conn = sqlite3.connect("Resources/hawaii.sqlite")
     cur = conn.cursor()
-    cur.execute("select * from measurement")   
+  
+    cur.execute("SELECT date, prcp from measurement where date >= '2016-08-23'")
+    rows = cur.fetchall()
+    precip_list = []
+    for row in rows:
+        precip_list.append(row)
 
+# Dict with date as the key and prcp as the value
+    precip = {date: prcp for date, prcp in precip_list}
+
+    return jsonify(precip)
 
 @app.route("/api/v1.0/station_all")
 def station_all():
