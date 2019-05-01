@@ -6,12 +6,6 @@ import sqlite3
 
 import datetime as dt
 
-import sqlalchemy
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from sqlalchemy import func
-
 justice_league_members = [
     {"superhero": "Aquaman", "real_name": "Arthur Curry"},
     {"superhero": "Batman", "real_name": "Bruce Wayne"},
@@ -51,7 +45,8 @@ def welcome():
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/my_column<br/>"
         f"/api/v1.0/date<br>"
-        f"/api/v1.0/lorie_test"
+        f"/api/v1.0/lorie_test<br>"
+        f"/api/v1.0/between_date<br>"
 
     )
 
@@ -151,7 +146,7 @@ def myColumn(input_column):
 
 
 
-@app.route("/api/v1.0/lorie_Test/<input_column>")
+@app.route("/api/v1.0/lorie_test/<input_column>")
 def lorieTest(input_column):
     """Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range."""
     """When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date."""
@@ -159,20 +154,16 @@ def lorieTest(input_column):
     cur = conn.cursor()
     peach = str(input_column)
     print(peach)
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s' " % peach)
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(peach))
-    cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where station =" + str(input_column))
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(input_column))
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % input_column)
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % peach)
+    cur.execute("SELECT * from measurement where station =" + str(input_column))
 
-    rows = cur.fetchall
+
+    rows = cur.fetchall()
     column_list = []
     for row in rows:
         column_list.append(row[0])
 
     columndata = dict()
-    columndata["seleced date"] = input_column
+    columndata["seleced station"] = input_column
     columndata["result"] = column_list
     return jsonify(columndata)
 
@@ -184,21 +175,57 @@ def start_date(input_column):
     conn = sqlite3.connect("Resources/hawaii.sqlite")
     cur = conn.cursor()
     peach = str(input_column)
-    print(peach)
+    print("Peach date:  " + peach)
     #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s' " % peach)
     #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(peach))
-    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(input_column))
+    #Sean's help
+    cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where Date(date) >= Date(" + str(input_column) + ")")
     #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(input_column))
     #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % input_column)
-    cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % peach)
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % peach)
 
-    rows = cur.fetchall
+    rows = cur.fetchall()
     column_list = []
     for row in rows:
-        column_list.append(row[0])
+        column_list.append(row)
 
     columndata = dict()
     columndata["seleced date"] = input_column
+    columndata["result"] = column_list
+    return jsonify(columndata)
+
+@app.route("/api/v1.0/between_date/<in_date1>/<in_date2>")
+def between_date(in_date1,in_date2):
+    """Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range."""
+    """When given the start only, calculate TMIN, TAVG, and TMAX for all dates greater than and equal to the start date."""
+    conn = sqlite3.connect("Resources/hawaii.sqlite")
+    cur = conn.cursor()
+    
+    #Convert the input dates to variables
+    print("Input Date1:  " + in_date1)
+    date1 = str(in_date1)
+    print("Date1:  "  + date1)
+    
+    print("Input Date2:  " + in_date2)
+    date2 = str(in_date2)
+    print("Date2:  " + date2)
+
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s' " % peach)
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(peach))
+    #Sean's help
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where Date(date) >= Date(" + str(input_column) + ")")
+    cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >=" + str(date1) + " and date <= " + str(date2))
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % input_column)
+    #cur.execute("SELECT min(tobs), max(tobs), avg(tobs) from measurement where date >= '%s';" % peach)
+
+    rows = cur.fetchall()
+    column_list = []
+    for row in rows:
+        column_list.append(row)
+
+    columndata = dict()
+    columndata["selected start date"] = date1
+    columndata["selected end date"] = date2
     columndata["result"] = column_list
     return jsonify(columndata)
 
